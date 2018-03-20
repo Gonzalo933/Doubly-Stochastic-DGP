@@ -153,9 +153,8 @@ class DGP(DGP_Base):
 
             if dim_in == dim_out:
                 mf = Identity()
-
             else:  # stepping down, use the pca projection
-                _, _, V = np.linalg.svd(X_running, full_matrices=False)
+                _, _, V = np.linalg.svd(X_running, full_matrices=False) # V -> (D,D) Matrix
                 W = V[:dim_out, :].T
 
                 mf = Linear(W)

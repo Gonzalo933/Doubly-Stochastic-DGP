@@ -163,7 +163,7 @@ class DGP(DGP_Base):
             else:  # same dimension
                 Z_kern = Z.copy()
             layers.append(SVGP_Layer(kern_in, Z_kern, dim_out, mf))
-            print("{} \n{}\n".format(Z_kern.shape, Z_kern[0:3, 0:3]))
+            # print("{} \n{}\n".format(Z_kern.shape, Z_kern[0:3, 0:3]))
         # Final Layer
         mf = Zero()  # Added to compare with DGP EP MCM
         dim_in = kernels[-1].input_dim
@@ -177,7 +177,7 @@ class DGP(DGP_Base):
             Z_kern = np.tile(first_pca[:, None], (1, dim_in))
         else:  # same dimension
             Z_kern = Z.copy()
-        print("{} \n{}\n".format(Z_kern.shape, Z_kern[0:3, 0:3]))
+        # print("{} \n{}\n".format(Z_kern.shape, Z_kern[0:3, 0:3]))
         layers.append(SVGP_Layer(kernels[-1], Z_kern, num_outputs, mean_function))
 
         """

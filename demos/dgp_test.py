@@ -25,6 +25,7 @@ X, Y, Xs, Ys, Y_std = [data[_] for _ in ['X', 'Y', 'Xs', 'Ys', 'Y_std']]
 print('N: {}, D: {}, Ns: {}'.format(X.shape[0], X.shape[1], Xs.shape[0]))
 
 Z_100 = kmeans2(X, 100, minit='points')[0]
+Z_5 = kmeans2(X, 5, minit='points')[0]
 Z_500 = kmeans2(X, 500, minit='points')[0]
 
 
@@ -34,9 +35,9 @@ def make_dgp(X, Y, Z, L):
     # the layer shapes are defined by the kernel dims, so here all hidden layers are D dimensional
     kernels = []
     #for l in range(L):
-    kernels.append(RBF(D))
+    kernels.append(RBF(5))
     kernels.append(RBF(2))
-    kernels.append(RBF(D))
+    kernels.append(RBF(9))
 
     # between layer noise (doesn't actually make much difference but we include it anyway)
     #for kernel in kernels[:-1]:
@@ -54,8 +55,11 @@ def make_dgp(X, Y, Z, L):
 
 #m_dgp1 = make_dgp(X, Y, Z_100, 1)
 #m_dgp2 = make_dgp(X, Y, Z_100, 2)
-m_dgp3 = make_dgp(X, Y, Z_100, 3)
+print("{} \n{}\n".format(Z_5.shape, Z_5[0:3, 0:3]))
+print("-----------------")
+m_dgp3 = make_dgp(X, Y, Z_5, 3)
 #m_dgp4 = make_dgp(X, Y, Z_100, 4)
 #m_dgp5 = make_dgp(X, Y, Z_100, 5)
 
 AdamOptimizer(0.01).minimize(m_dgp3, maxiter=10)
+print("Done")

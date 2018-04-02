@@ -135,7 +135,7 @@ class DGP(DGP_Base):
       }
 
     """
-    def __init__(self, X, Y, Z, kernels, likelihood, 
+    def __init__(self, X, Y, Z, kernels, likelihood,
                  num_outputs=None,
                  mean_function=Zero(),  # the final layer mean function
                  **kwargs):
@@ -151,23 +151,59 @@ class DGP(DGP_Base):
             dim_in = kern_in.input_dim
             dim_out = kern_out.input_dim
 
+            mf = Zero()  # Added to compare with DGP EP MCM
+            # Inducing points for layer
+            if Z.shape[1] > dim_in:  # Reduce Z by doing PCA
+                _, _, V = np.linalg.svd(X, full_matrices=False)  # V -> (D,D) Matrix
+                Z_kern = Z.dot(V[:dim_in, :].T)
+            elif Z.shape[1] < dim_in:  # Increase Z by doing tile
+                _, _, V = np.linalg.svd(X, full_matrices=False)  # V -> (D,D) Matrix
+                first_pca = Z.dot(V[0, :].T)  # First Principal component
+                Z_kern = np.tile(first_pca[:, None], (1, dim_in))
+            else:  # same dimension
+                Z_kern = Z.copy()
+            layers.append(SVGP_Layer(kern_in, Z_kern, dim_out, mf))
+            print("{} \n{}\n".format(Z_kern.shape, Z_kern[0:3, 0:3]))
+        # Final Layer
+        mf = Zero()  # Added to compare with DGP EP MCM
+        dim_in = kernels[-1].input_dim
+        # Inducing points for layer
+        if Z.shape[1] > dim_in:  # Reduce Z by doing PCA
+            _, _, V = np.linalg.svd(X, full_matrices=False)  # V -> (D,D) Matrix
+            Z_kern = Z.dot(V[:dim_in, :].T)
+        elif Z.shape[1] < dim_in:  # Increase Z by doing tile
+            _, _, V = np.linalg.svd(X, full_matrices=False)  # V -> (D,D) Matrix
+            first_pca = Z.dot(V[0, :].T)  # First Principal component
+            Z_kern = np.tile(first_pca[:, None], (1, dim_in))
+        else:  # same dimension
+            Z_kern = Z.copy()
+        print("{} \n{}\n".format(Z_kern.shape, Z_kern[0:3, 0:3]))
+        layers.append(SVGP_Layer(kernels[-1], Z_kern, num_outputs, mean_function))
+
+        """
+        for kern_in, kern_out in zip(kernels[:-1], kernels[1:]):
+            dim_in = kern_in.input_dim
+            dim_out = kern_out.input_dim
+
             if dim_in == dim_out:
                 mf = Identity()
             else:  # stepping down, use the pca projection
-                _, _, V = np.linalg.svd(X_running, full_matrices=False) # V -> (D,D) Matrix
+                _, _, V = np.linalg.svd(X_running, full_matrices=False)  # V -> (D,D) Matrix
                 W = V[:dim_out, :].T
 
                 mf = Linear(W)
                 mf.set_trainable(False)
-
+            # Z_kern = Z_running[:, 0:dim_in]
+            # print("{} \n{}\n".format(Z_kern.shape, Z_kern[0:3, 0:3]))
             layers.append(SVGP_Layer(kern_in, Z_running, dim_out, mf))
 
             if dim_in != dim_out:
                 Z_running = Z_running.dot(W)
                 X_running = X_running.dot(W)
-
-
+        """
         # final layer
-        layers.append(SVGP_Layer(kernels[-1], Z_running, num_outputs, mean_function))
+        # Z_kern = Z_running[:, 0:kernels[-1].input_dim]
+        # print("{} \n{}\n".format(Z_kern.shape, Z_kern[0:3, 0:3]))
+        # layers.append(SVGP_Layer(kernels[-1], Z_running, num_outputs, mean_function))
 
         DGP_Base.__init__(self, X, Y, likelihood, layers, **kwargs)
